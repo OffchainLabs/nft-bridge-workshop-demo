@@ -27,17 +27,20 @@ import "./L2ArbERC721.sol";
 contract L2NftGateway is IERC721Receiver {
     mapping(address => address) public l1ToL2Token;
     address public counterpartL1Gateway;
+    address public counterpartL1GatewayAliased;
+
 
     function initialize(address _counterpartL1Gateway) public {
         require(counterpartL1Gateway == address(0), "ALREADY_INIT");
         require(_counterpartL1Gateway != address(0), "BAD_COUNTERPART");
         counterpartL1Gateway = _counterpartL1Gateway;
+        counterpartL1GatewayAliased = AddressAliasHelper.applyL1ToL2Alias(counterpartL1Gateway);
     }
 
     modifier onlyCounterpartL1Gateway() {
         require(
             msg.sender ==
-                AddressAliasHelper.applyL1ToL2Alias(counterpartL1Gateway),
+                counterpartL1GatewayAliased,
             "ONLY_COUNTERPART_L1_GATEWAY"
         );
         _;
@@ -52,6 +55,7 @@ contract L2NftGateway is IERC721Receiver {
         address l2Token = l1ToL2Token[l1Token];
         require(l2Token != address(0), "NOT_REGISTERED");
 
+        // TODO: necessary?
         require(
             L2ArbERC721(l2Token).l1Address() == l1Token,
             "INVALID_TOKEN"

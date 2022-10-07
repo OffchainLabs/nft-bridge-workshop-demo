@@ -24,17 +24,17 @@ import "arb-bridge-eth/contracts/bridge/interfaces/IOutbox.sol";
 
 import "./L2NftGateway.sol";
 
+struct L2GasParams {
+    uint256 _maxSubmissionCost;
+    uint256 _maxGas;
+    uint256 _gasPriceBid;
+}
+
 contract L1NftGateway is IERC721Receiver {
     address public counterpartL2Gateway;
     address public inbox;
     address public bridge;
     mapping(address => address) public l1ToL2Token;
-
-    struct L2GasParams {
-        uint256 _maxSubmissionCost;
-        uint256 _maxGas;
-        uint256 _gasPriceBid;
-    }
 
     function initialize(address _counterpartL2Gateway, address _inbox) public {
         require(counterpartL2Gateway == address(0), "ALREADY_INIT");
@@ -66,10 +66,9 @@ contract L1NftGateway is IERC721Receiver {
     function finalizeWithdraw(
         address l1Token,
         uint256 tokenId,
-        address to,
-        bytes calldata data
+        address to
     ) external onlyCounterpartL2Gateway {
-        IERC721(l1Token).safeTransferFrom(address(this), to, tokenId, data);
+        IERC721(l1Token).safeTransferFrom(address(this), to, tokenId);
     }
 
     function registerTokenToL2(
@@ -77,12 +76,6 @@ contract L1NftGateway is IERC721Receiver {
         L2GasParams memory _l2GasParams,
         address refundAddress
     ) public payable returns (uint256) {
-        require(
-            msg.value ==
-                (_l2GasParams._maxGas * _l2GasParams._gasPriceBid) +
-                    _l2GasParams._maxSubmissionCost,
-            "WRONG_MSG_VAL"
-        );
 
         address _l1Address = msg.sender;
         address currL2Addr = l1ToL2Token[_l1Address];
@@ -120,16 +113,10 @@ contract L1NftGateway is IERC721Receiver {
         L2GasParams memory _l2GasParams,
         address refundAddress
     ) external payable returns (uint256) {
-        require(
-            msg.value ==
-                (_l2GasParams._maxGas * _l2GasParams._gasPriceBid) +
-                    _l2GasParams._maxSubmissionCost,
-            "WRONG_MSG_VAL"
-        );
         address l2Token = l1ToL2Token[l1Token];
         require(l2Token != address(0), "NOT_REGISTERED");
 
-        IERC721(l1Token).transferFrom(msg.sender, address(this), tokenId);
+        IERC721(l1Token).safeTransferFrom(msg.sender, address(this), tokenId);
         bytes memory _l2MessageCallData = abi.encodeWithSelector(
             L2NftGateway.finalizeDeposit.selector,
             l1Token,
@@ -158,7 +145,7 @@ contract L1NftGateway is IERC721Receiver {
         uint256 tokenId,
         bytes calldata data
     ) external override returns (bytes4) {
-        // this shouldn't be triggered since we don't do a safe `transferFrom`
+        // this shouldn't be triggered since we don't do a safe `safeTransferFrom`
         revert("INVALID_DEPOSIT");
     }
 }

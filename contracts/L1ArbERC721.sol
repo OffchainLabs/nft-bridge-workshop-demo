@@ -15,19 +15,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "./L1NftGateway.sol";
 // solhint-disable-next-line compiler-version
 pragma solidity >=0.6.9 <0.9.0;
 
-/**
- * @title Minimum expected interface for L1 custom token (see TestCustomTokenL1.sol for an example implementation)
- */
-interface ICustomToken  {
-    /**
-     * @notice Should make an external call to L1NftGateway.registerCustomL2Token
-     */
+contract L1ArbERC721 is ERC721 {
+
+    constructor(string memory _name, string memory _symbol)
+        public
+        ERC721(_name, _symbol)
+    {}
+
     function registerTokenToL2(
-
-    ) external payable;
-
+        address l1Gateway,
+        address _l2Address,
+        L2GasParams memory _l2GasParams,
+        address refundAddress
+    ) public {
+        L1NftGateway(l1Gateway).registerTokenToL2(_l2Address, _l2GasParams, refundAddress);
+    }
 }

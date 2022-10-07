@@ -20,14 +20,16 @@ pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
-abstract contract L2ArbERC721 is ERC721 {
+contract L2ArbERC721 is ERC721 {
     address public gateway;
     address public l1Address;
 
-    function bridgeInit(
-        address _l1Address,
-        address _gateway
-    ) external {
+    constructor(string memory _name, string memory _symbol)
+        public
+        ERC721(_name, _symbol)
+    {}
+
+    function bridgeInit(address _l1Address, address _gateway) external {
         gateway = gateway;
         l1Address = _l1Address;
     }
@@ -37,15 +39,11 @@ abstract contract L2ArbERC721 is ERC721 {
         _;
     }
 
-    function bridgeMint(
-        address to,
-        uint256 tokenId
-    ) external onlyGateway {
+    function bridgeMint(address to, uint256 tokenId) external onlyGateway {
         _mint(to, tokenId);
     }
 
     function bridgeBurn(uint256 tokenId) external onlyGateway {
         _burn(tokenId);
     }
-
 }
