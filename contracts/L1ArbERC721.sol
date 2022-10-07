@@ -16,16 +16,21 @@
  * limitations under the License.
  */
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+
 import "./L1NftGateway.sol";
 // solhint-disable-next-line compiler-version
 pragma solidity >=0.6.9 <0.9.0;
 
-contract L1ArbERC721 is ERC721 {
-
+contract L1ArbERC721 is ERC721, Ownable {
     constructor(string memory _name, string memory _symbol)
         public
         ERC721(_name, _symbol)
     {}
+
+    function mint(address to, uint256 tokenId) public onlyOwner {
+        _safeMint(to, tokenId);
+    }
 
     function registerTokenToL2(
         address l1Gateway,
@@ -33,6 +38,10 @@ contract L1ArbERC721 is ERC721 {
         L2GasParams memory _l2GasParams,
         address refundAddress
     ) public {
-        L1NftGateway(l1Gateway).registerTokenToL2(_l2Address, _l2GasParams, refundAddress);
+        L1NftGateway(l1Gateway).registerTokenToL2(
+            _l2Address,
+            _l2GasParams,
+            refundAddress
+        );
     }
 }
