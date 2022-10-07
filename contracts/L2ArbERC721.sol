@@ -24,13 +24,13 @@ contract L2ArbERC721 is ERC721 {
     address public gateway;
     address public l1Address;
 
-    constructor(string memory _name, string memory _symbol)
-        public
-        ERC721(_name, _symbol)
-    {}
-
-    function bridgeInit(address _l1Address, address _gateway) external {
-        gateway = gateway;
+    constructor(
+        string memory _name,
+        string memory _symbol,
+        address _l1Address,
+        address _gateway
+    ) public ERC721(_name, _symbol) {
+        gateway = _gateway;
         l1Address = _l1Address;
     }
 

@@ -71,6 +71,18 @@ contract L1NftGateway is IERC721Receiver {
         IERC721(l1Token).safeTransferFrom(address(this), to, tokenId);
     }
 
+    function getRegisterL2MessageCallData(
+        address _l1Address,
+        address _l2Address
+    ) pure public returns (bytes memory) {
+        return
+            abi.encodeWithSelector(
+                L2NftGateway.finalizeRegistrationFromL1.selector,
+                _l1Address,
+                _l2Address
+            );
+    }
+
     function registerTokenToL2(
         address _l2Address,
         L2GasParams memory _l2GasParams,
@@ -85,11 +97,7 @@ contract L1NftGateway is IERC721Receiver {
 
         l1ToL2Token[_l1Address] = _l2Address;
 
-        bytes memory _l2MessageCallData = abi.encodeWithSelector(
-            L2NftGateway.finalizeRegistrationFromL1.selector,
-            _l1Address,
-            _l2Address
-        );
+        bytes memory _l2MessageCallData = getRegisterL2MessageCallData(_l1Address, _l2Address);
 
         uint256 seqNum = IInbox(inbox).createRetryableTicket{value: msg.value}(
             counterpartL2Gateway,
@@ -132,7 +140,12 @@ contract L1NftGateway is IERC721Receiver {
         require(l2Token != address(0), "NOT_REGISTERED");
 
         IERC721(l1Token).safeTransferFrom(msg.sender, address(this), tokenId);
-        bytes memory _l2MessageCallData = getDepositL2MessageCallData(l1Token, l2Token, tokenId, to);
+        bytes memory _l2MessageCallData = getDepositL2MessageCallData(
+            l1Token,
+            l2Token,
+            tokenId,
+            to
+        );
 
         uint256 seqNum = IInbox(inbox).createRetryableTicket{value: msg.value}(
             counterpartL2Gateway,
