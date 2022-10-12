@@ -19,10 +19,10 @@
 pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "arb-bridge-eth/contracts/bridge/interfaces/IInbox.sol";
 import "arb-bridge-eth/contracts/bridge/interfaces/IOutbox.sol";
-
-import "./L2NftGateway.sol";
+import "../arbitrum/L2NftGateway.sol";
 
 struct L2GasParams {
     uint256 _maxSubmissionCost;
