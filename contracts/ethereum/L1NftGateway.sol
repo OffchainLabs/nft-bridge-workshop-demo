@@ -67,20 +67,15 @@ contract L1NftGateway is IERC721Receiver {
         address _l1Token,
         uint256 _tokenId,
         address _to
-    ) external onlyCounterpartL2Gateway {
-        IERC721(_l1Token).safeTransferFrom(address(this), _to, _tokenId);
+    ) external {
+        // Do!
     }
 
     function getRegisterL2MessageCallData(
         address _l1Address,
         address _l2Address
-    ) pure public returns (bytes memory) {
-        return
-            abi.encodeWithSelector(
-                L2NftGateway.finalizeRegistrationFromL1.selector,
-                _l1Address,
-                _l2Address
-            );
+    ) public pure returns (bytes memory) {
+        // Do!
     }
 
     function registerTokenToL2(
@@ -88,29 +83,7 @@ contract L1NftGateway is IERC721Receiver {
         L2GasParams memory _l2GasParams,
         address _refundAddress
     ) public payable returns (uint256) {
-        address _l1Address = msg.sender;
-        address currL2Addr = l1ToL2Token[_l1Address];
-        if (currL2Addr != address(0)) {
-            // if token is already set, don't allow it to set a different L2 address
-            require(currL2Addr == _l2Address, "NO_UPDATE_TO_DIFFERENT_ADDR");
-        }
-
-        l1ToL2Token[_l1Address] = _l2Address;
-
-        bytes memory _l2MessageCallData = getRegisterL2MessageCallData(_l1Address, _l2Address);
-
-        uint256 seqNum = IInbox(inbox).createRetryableTicket{value: msg.value}(
-            counterpartL2Gateway,
-            0,
-            _l2GasParams._maxSubmissionCost,
-            _refundAddress,
-            _refundAddress,
-            _l2GasParams._maxGas,
-            _l2GasParams._gasPriceBid,
-            _l2MessageCallData
-        );
-
-        return seqNum;
+        // Do!
     }
 
     function getDepositL2MessageCallData(
@@ -119,14 +92,7 @@ contract L1NftGateway is IERC721Receiver {
         uint256 _tokenId,
         address _to
     ) public pure returns (bytes memory) {
-        return
-            abi.encodeWithSelector(
-                L2NftGateway.finalizeDeposit.selector,
-                _l1Token,
-                _l2Token,
-                _tokenId,
-                _to
-            );
+        // Do!
     }
 
     function deposit(
@@ -136,29 +102,7 @@ contract L1NftGateway is IERC721Receiver {
         L2GasParams memory _l2GasParams,
         address _refundAddress
     ) external payable returns (uint256) {
-        address l2Token = l1ToL2Token[_l1Token];
-        require(l2Token != address(0), "NOT_REGISTERED");
-
-        IERC721(_l1Token).safeTransferFrom(msg.sender, address(this), _tokenId);
-        bytes memory _l2MessageCallData = getDepositL2MessageCallData(
-            _l1Token,
-            l2Token,
-            _tokenId,
-            _to
-        );
-
-        uint256 seqNum = IInbox(inbox).createRetryableTicket{value: msg.value}(
-            counterpartL2Gateway,
-            0,
-            _l2GasParams._maxSubmissionCost,
-            _refundAddress,
-            _refundAddress,
-            _l2GasParams._maxGas,
-            _l2GasParams._gasPriceBid,
-            _l2MessageCallData
-        );
-
-        return seqNum;
+        // Do!
     }
 
     function onERC721Received(

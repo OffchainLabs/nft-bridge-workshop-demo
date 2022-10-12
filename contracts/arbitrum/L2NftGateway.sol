@@ -29,20 +29,18 @@ contract L2NftGateway is IERC721Receiver {
     address public counterpartL1Gateway;
     address public counterpartL1GatewayAliased;
 
-
     function initialize(address _counterpartL1Gateway) public {
         require(counterpartL1Gateway == address(0), "ALREADY_INIT");
         require(_counterpartL1Gateway != address(0), "BAD_COUNTERPART");
         counterpartL1Gateway = _counterpartL1Gateway;
-        counterpartL1GatewayAliased = AddressAliasHelper.applyL1ToL2Alias(counterpartL1Gateway);
+        counterpartL1GatewayAliased = AddressAliasHelper.applyL1ToL2Alias(
+            counterpartL1Gateway
+        );
     }
 
     modifier onlyCounterpartL1Gateway() {
-        require(
-            msg.sender ==
-                counterpartL1GatewayAliased,
-            "ONLY_COUNTERPART_L1_GATEWAY"
-        );
+        // Do!
+
         _;
     }
 
@@ -51,24 +49,7 @@ contract L2NftGateway is IERC721Receiver {
         uint256 tokenId,
         address to
     ) external returns (uint256) {
-        address l2Token = l1ToL2Token[l1Token];
-        require(l2Token != address(0), "NOT_REGISTERED");
-
-        // TODO: necessary?
-        require(
-            L2ArbERC721(l2Token).l1Address() == l1Token,
-            "INVALID_TOKEN"
-        );
-        L2ArbERC721(l2Token).bridgeBurn(tokenId);
-
-        bytes memory _l1MessageCallData = abi.encodeWithSelector(
-            L1NftGateway.finalizeWithdraw.selector,
-            l1Token,
-            tokenId,
-            to
-        );
-
-        return ArbSys(address(100)).sendTxToL1(to, _l1MessageCallData);
+        // Do!
     }
 
     function finalizeDeposit(
@@ -76,16 +57,14 @@ contract L2NftGateway is IERC721Receiver {
         address l2Token,
         uint256 tokenId,
         address to
-    ) external onlyCounterpartL1Gateway {
-        require(l1ToL2Token[l1Token] == l2Token, "WRONG_ADDRESS_PAIRING");
-        L2ArbERC721(l2Token).bridgeMint(to, tokenId);
+    ) external {
+        // Do!
     }
 
     function finalizeRegistrationFromL1(address l1Address, address l2Address)
         external
-        onlyCounterpartL1Gateway
     {
-        l1ToL2Token[l1Address] = l2Address;
+        // Do!
     }
 
     function onERC721Received(

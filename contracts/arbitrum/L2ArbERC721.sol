@@ -39,11 +39,11 @@ contract L2ArbERC721 is ERC721 {
         _;
     }
 
-    function bridgeMint(address to, uint256 tokenId) external onlyGateway {
-        _mint(to, tokenId);
+    function bridgeMint(address to, uint256 tokenId) external {
+        // Do!
     }
 
-    function bridgeBurn(uint256 tokenId) external onlyGateway {
-        _burn(tokenId);
+    function bridgeBurn(uint256 tokenId) external {
+        // Do!
     }
 }
