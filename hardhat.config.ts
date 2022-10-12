@@ -11,7 +11,7 @@ const config = {
   solidity: "0.8.9",
   networks: {
     goerli: {
-      url: "https://goerli.infura.io/v3/" + String(process.env.INFURA_KEY),
+      url:  String(process.env.GOERLI_RPC),
       accounts: [String(process.env.TESTNET_PRIVKEY)]
     },
     arbgoerli: {
