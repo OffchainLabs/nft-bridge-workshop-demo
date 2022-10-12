@@ -49,8 +49,7 @@ contract L2NftGateway is IERC721Receiver {
     function withdraw(
         address l1Token,
         uint256 tokenId,
-        address to,
-        bytes calldata data
+        address to
     ) external returns (uint256) {
         address l2Token = l1ToL2Token[l1Token];
         require(l2Token != address(0), "NOT_REGISTERED");
@@ -66,8 +65,7 @@ contract L2NftGateway is IERC721Receiver {
             L1NftGateway.finalizeWithdraw.selector,
             l1Token,
             tokenId,
-            to,
-            data
+            to
         );
 
         return ArbSys(address(100)).sendTxToL1(to, _l1MessageCallData);

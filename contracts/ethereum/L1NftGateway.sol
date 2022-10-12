@@ -64,11 +64,11 @@ contract L1NftGateway is IERC721Receiver {
     }
 
     function finalizeWithdraw(
-        address l1Token,
-        uint256 tokenId,
-        address to
+        address _l1Token,
+        uint256 _tokenId,
+        address _to
     ) external onlyCounterpartL2Gateway {
-        IERC721(l1Token).safeTransferFrom(address(this), to, tokenId);
+        IERC721(_l1Token).safeTransferFrom(address(this), _to, _tokenId);
     }
 
     function getRegisterL2MessageCallData(
@@ -86,7 +86,7 @@ contract L1NftGateway is IERC721Receiver {
     function registerTokenToL2(
         address _l2Address,
         L2GasParams memory _l2GasParams,
-        address refundAddress
+        address _refundAddress
     ) public payable returns (uint256) {
         address _l1Address = msg.sender;
         address currL2Addr = l1ToL2Token[_l1Address];
@@ -103,8 +103,8 @@ contract L1NftGateway is IERC721Receiver {
             counterpartL2Gateway,
             0,
             _l2GasParams._maxSubmissionCost,
-            refundAddress,
-            refundAddress,
+            _refundAddress,
+            _refundAddress,
             _l2GasParams._maxGas,
             _l2GasParams._gasPriceBid,
             _l2MessageCallData
@@ -130,29 +130,29 @@ contract L1NftGateway is IERC721Receiver {
     }
 
     function deposit(
-        address l1Token,
-        uint256 tokenId,
-        address to,
+        address _l1Token,
+        uint256 _tokenId,
+        address _to,
         L2GasParams memory _l2GasParams,
-        address refundAddress
+        address _refundAddress
     ) external payable returns (uint256) {
-        address l2Token = l1ToL2Token[l1Token];
+        address l2Token = l1ToL2Token[_l1Token];
         require(l2Token != address(0), "NOT_REGISTERED");
 
-        IERC721(l1Token).safeTransferFrom(msg.sender, address(this), tokenId);
+        IERC721(_l1Token).safeTransferFrom(msg.sender, address(this), _tokenId);
         bytes memory _l2MessageCallData = getDepositL2MessageCallData(
-            l1Token,
+            _l1Token,
             l2Token,
-            tokenId,
-            to
+            _tokenId,
+            _to
         );
 
         uint256 seqNum = IInbox(inbox).createRetryableTicket{value: msg.value}(
             counterpartL2Gateway,
             0,
             _l2GasParams._maxSubmissionCost,
-            refundAddress,
-            refundAddress,
+            _refundAddress,
+            _refundAddress,
             _l2GasParams._maxGas,
             _l2GasParams._gasPriceBid,
             _l2MessageCallData
@@ -167,7 +167,6 @@ contract L1NftGateway is IERC721Receiver {
         uint256 tokenId,
         bytes calldata data
     ) external override returns (bytes4) {
-        // this shouldn't be triggered since we don't do a safe `safeTransferFrom`
-        revert("INVALID_DEPOSIT");
+        return this.onERC721Received.selector;
     }
 }
