@@ -21,7 +21,7 @@ pragma solidity ^0.8.9;
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "arbos-precompiles/arbos/builtin/ArbSys.sol";
 import "./AddressAliasHelper.sol";
-import "./L1NftGateway.sol";
+import "../ethereum/L1NftGateway.sol";
 import "./L2ArbERC721.sol";
 
 contract L2NftGateway is IERC721Receiver {

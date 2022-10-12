@@ -19,10 +19,10 @@
 pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "arb-bridge-eth/contracts/bridge/interfaces/IInbox.sol";
 import "arb-bridge-eth/contracts/bridge/interfaces/IOutbox.sol";
-
-import "./L2NftGateway.sol";
+import "../arbitrum/L2NftGateway.sol";
 
 struct L2GasParams {
     uint256 _maxSubmissionCost;
@@ -85,6 +85,7 @@ contract L1NftGateway is IERC721Receiver {
 
         l1ToL2Token[_l1Address] = _l2Address;
 
+        // TODO: seperate function?
         bytes memory _l2MessageCallData = abi.encodeWithSelector(
             L2NftGateway.finalizeRegistrationFromL1.selector,
             _l1Address,
