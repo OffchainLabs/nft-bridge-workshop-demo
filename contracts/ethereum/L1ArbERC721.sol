@@ -23,7 +23,7 @@ import "./L1NftGateway.sol";
 pragma solidity >=0.6.9 <0.9.0;
 
 contract L1ArbERC721 is ERC721, Ownable {
-    uint256 tokenId = 1;
+    uint256 public tokenId = 1;
     constructor(string memory _name, string memory _symbol)
         public
         ERC721(_name, _symbol)

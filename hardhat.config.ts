@@ -4,24 +4,27 @@ import { task } from "hardhat/config";
 import { JsonRpcProvider } from "@ethersproject/providers";
 import { Wallet } from "@ethersproject/wallet";
 import { AddressZero } from "@ethersproject/constants";
-import { writeFileSync, readFileSync } from 'fs'
+import { writeFileSync, readFileSync } from "fs";
+import { L1ToL2MessageGasEstimator, L1TransactionReceipt } from "@arbitrum/sdk";
+import { log } from "console";
+
 require("dotenv").config();
 
 const config = {
   solidity: "0.8.9",
   networks: {
     goerli: {
-      url:  String(process.env.GOERLI_RPC),
-      accounts: [String(process.env.TESTNET_PRIVKEY)]
+      url: String(process.env.GOERLI_RPC),
+      accounts: [String(process.env.TESTNET_PRIVKEY)],
     },
     arbgoerli: {
       url: "https://goerli-rollup.arbitrum.io/rpc",
-      accounts: [String(process.env.TESTNET_PRIVKEY)]
-    }
-  }
+      accounts: [String(process.env.TESTNET_PRIVKEY)],
+    },
+  },
 };
 
-const deploymentsPath = "./deployments.json"
+const deploymentsPath = "./deployments.json";
 task(
   "deploy-all",
   "deploy bridge and token contracts",
@@ -37,8 +40,7 @@ task(
     const l2Signer = new Wallet(config.networks.arbgoerli.accounts[0]).connect(
       l2Provider
     );
-    console.log('Deploying from signer',l2Signer.address );
-    
+    console.log("Deploying from signer", l2Signer.address);
 
     const L1NFTGateway__factory = (
       await hre.ethers.getContractFactory("L1NftGateway")
@@ -47,7 +49,6 @@ task(
     await l1NFTGateway.deployed();
 
     console.log(`l1NFTGateway deployed at ${l1NFTGateway.address}`);
-    
 
     const L2NFTGateway__factory = (
       await hre.ethers.getContractFactory("L2NftGateway")
@@ -66,9 +67,7 @@ task(
     const L1NFT__factory = (
       await hre.ethers.getContractFactory("L1ArbERC721")
     ).connect(l1Signer);
-    
-    
-    
+
     const l1NFT = await L1NFT__factory.deploy("GoldmanCoins", "GMC");
     await l1NFT.deployed();
     console.log(`L1ArbERC721 deployed at ${l1NFT.address}`);
@@ -86,14 +85,16 @@ task(
 
     console.log(`L2ArbERC721 deployed at ${l2NFT.address}`);
 
-
-    writeFileSync(deploymentsPath, JSON.stringify({
-      l1TokenAddress: l1NFT.address,
-      l2TokenAddress: l2NFT.address,
-      l1GatewayAddress: l1NFTGateway.address,
-      l2GatewayAddress: l2NFTGateway.address
-    }))
-    console.log('done ✌️');
+    writeFileSync(
+      deploymentsPath,
+      JSON.stringify({
+        l1TokenAddress: l1NFT.address,
+        l2TokenAddress: l2NFT.address,
+        l1GatewayAddress: l1NFTGateway.address,
+        l2GatewayAddress: l2NFTGateway.address,
+      })
+    );
+    console.log("done ✌️");
   }
 );
 
@@ -101,34 +102,132 @@ task(
   "register-and-deposit",
   "register and deposit token",
   async (taskArgs, hre) => {
-    const deploymentAddresses = JSON.parse(readFileSync(deploymentsPath, 'utf8'))
+    const deploymentAddresses = JSON.parse(
+      readFileSync(deploymentsPath, "utf8")
+    );
     console.log(deploymentAddresses);
-    
+
     const l1Provider = new JsonRpcProvider(config.networks.goerli.url);
     const l1Signer = new Wallet(config.networks.goerli.accounts[0]).connect(
       l1Provider
     );
     const l2Provider = new JsonRpcProvider(config.networks.arbgoerli.url);
-    const l2Signer = new Wallet(config.networks.arbgoerli.accounts[0]).connect(
-      l2Provider
+
+    const l1NFTGateway = (await hre.ethers.getContractFactory("L1NftGateway"))
+      .attach(deploymentAddresses.l1GatewayAddress)
+      .connect(l1Signer);
+
+    const l1NFT = (await hre.ethers.getContractFactory("L1ArbERC721"))
+      .attach(deploymentAddresses.l1TokenAddress)
+      .connect(l1Signer);
+
+    const registeredL2Adddress = await l1NFTGateway.l1ToL2Token(
+      deploymentAddresses.l1TokenAddress
     );
+    if (registeredL2Adddress === AddressZero) {
+      console.log("Not registered; registering now");
 
-    const l1NFTGateway = (
-      await hre.ethers.getContractFactory("L1NftGateway")
-    ).attach(deploymentAddresses.l1GatewayAddress).connect(l1Signer);
+      const gasEstimator = new L1ToL2MessageGasEstimator(l2Provider);
 
-    const l1NFT = (
-      await hre.ethers.getContractFactory("L1ArbERC721")
-    ).attach(deploymentAddresses.l1TokenAddress).connect(l1Signer);
+      const l1BaseFee = await l1Provider.getGasPrice();
+      const l2CallData = hre.ethers.utils.hexlify(
+        await l1NFTGateway.getRegisterL2MessageCallData(
+          deploymentAddresses.l1TokenAddress,
+          deploymentAddresses.l2TokenAddress
+        )
+      );
 
-    const registeredL2Adddress  = await l1NFTGateway.l1ToL2Token(deploymentAddresses.l1TokenAddress) 
-    if(registeredL2Adddress === AddressZero){
-      console.log('Not registered; registering now');
- 
-      // l1NFT.registerTokenToL2
-      
+      const gasEstimateResults = await gasEstimator.estimateAll(
+        deploymentAddresses.l1GatewayAddress,
+        deploymentAddresses.l2GatewayAddress,
+        l2CallData,
+        hre.ethers.constants.Zero,
+        l1BaseFee,
+        l1Signer.address,
+        l1Signer.address,
+        l1Provider
+      );
+      console.log(
+        "got gas estimate results",
+        gasEstimateResults,
+        "registering:"
+      );
+
+      const res = await l1NFTGateway.registerTokenToL2(
+        deploymentAddresses.l2TokenAddress,
+        {
+          _maxSubmissionCost: gasEstimateResults.maxSubmissionFee,
+          _maxGas: gasEstimateResults.gasLimit,
+          _gasPriceBid: gasEstimateResults.maxFeePerGas,
+        },
+        l1Signer.address,
+        { value: gasEstimateResults.totalL2GasCosts }
+      );
+
+      const receipt = new L1TransactionReceipt(await res.wait());
+      console.log("registered on L1");
+
+      const retryableTicket = await receipt.getL1ToL2Message(l2Provider);
+      console.log(
+        "L1 message published",
+        receipt.transactionHash,
+        "waiting for retryable ticket creation:"
+      );
+      const status = await retryableTicket.waitForStatus();
+      console.log("done!", status);
+    } else {
+      console.log("already registered: minting / deposting now");
+      let res = await l1NFT.mint(l1Signer.address);
+      let rec = await res.wait();
+      console.log("Minted new NFT");
+
+      const newTokenID = await (await l1NFT.tokenId()).sub(1);
+
+      const gasEstimator = new L1ToL2MessageGasEstimator(l2Provider);
+
+      const l1BaseFee = await l1Provider.getGasPrice();
+      const l2CallData = hre.ethers.utils.hexlify(
+        await l1NFTGateway.getDepositL2MessageCallData(
+          deploymentAddresses.l1TokenAddress,
+          deploymentAddresses.l2TokenAddress,
+          newTokenID,
+          l1Signer.address
+        )
+      );
+
+      const gasEstimateResults = await gasEstimator.estimateAll(
+        deploymentAddresses.l1GatewayAddress,
+        deploymentAddresses.l2GatewayAddress,
+        l2CallData,
+        hre.ethers.constants.Zero,
+        l1BaseFee,
+        l1Signer.address,
+        l1Signer.address,
+        l1Provider
+      );
+
+      res = await l1NFTGateway.deposit(
+        deploymentAddresses.l1TokenAddress,
+        newTokenID,
+        l1Signer.address,
+        {
+          _maxSubmissionCost: gasEstimateResults.maxSubmissionFee,
+          _maxGas: gasEstimateResults.gasLimit,
+          _gasPriceBid: gasEstimateResults.maxFeePerGas,
+        },
+        l1Signer.address
+      );
+
+      const receipt = new L1TransactionReceipt(await res.wait());
+      console.log("L1 deposit tx published", receipt.transactionHash);
+
+      const retryableTicket = await receipt.getL1ToL2Message(l2Provider);
+      console.log("waiting for retryable ticket creation:");
+
+      const status = await retryableTicket.waitForStatus();
+      console.log("done!", status);
     }
-    
-  })
+  }
+);
 
 export default config;
