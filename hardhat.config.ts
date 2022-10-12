@@ -138,13 +138,15 @@ task(
       );
 
       const gasEstimateResults = await gasEstimator.estimateAll(
-        deploymentAddresses.l1GatewayAddress,
-        deploymentAddresses.l2GatewayAddress,
-        l2CallData,
-        hre.ethers.constants.Zero,
+        {
+          to: deploymentAddresses.l2GatewayAddress,
+          from: deploymentAddresses.l1GatewayAddress,
+          data: l2CallData,
+          l2CallValue: hre.ethers.constants.Zero,
+          excessFeeRefundAddress: l1Signer.address,
+          callValueRefundAddress: l1Signer.address,
+        },
         l1BaseFee,
-        l1Signer.address,
-        l1Signer.address,
         l1Provider
       );
       console.log(
@@ -156,22 +158,22 @@ task(
       const res = await l1NFTGateway.registerTokenToL2(
         deploymentAddresses.l2TokenAddress,
         {
-          _maxSubmissionCost: gasEstimateResults.maxSubmissionFee,
+          _maxSubmissionCost: gasEstimateResults.maxSubmissionCost,
           _maxGas: gasEstimateResults.gasLimit,
           _gasPriceBid: gasEstimateResults.maxFeePerGas,
         },
         l1Signer.address,
-        { value: gasEstimateResults.totalL2GasCosts }
+        { value: gasEstimateResults.deposit }
       );
 
       const receipt = new L1TransactionReceipt(await res.wait());
       console.log("registered on L1");
 
-      const retryableTicket = await receipt.getL1ToL2Message(l2Provider);
+      const retryableTicket = (await receipt.getL1ToL2Messages(l2Provider))[0]
       console.log(
         "L1 message published",
         receipt.transactionHash,
-        "waiting for retryable ticket creation:"
+        "waiting for retryable ticket creation on L2:"
       );
       const status = await retryableTicket.waitForStatus();
       console.log("done!", status);
@@ -196,13 +198,15 @@ task(
       );
 
       const gasEstimateResults = await gasEstimator.estimateAll(
-        deploymentAddresses.l1GatewayAddress,
-        deploymentAddresses.l2GatewayAddress,
-        l2CallData,
-        hre.ethers.constants.Zero,
+        {
+          to: deploymentAddresses.l2GatewayAddress,
+          from: deploymentAddresses.l1GatewayAddress,
+          data: l2CallData,
+          l2CallValue: hre.ethers.constants.Zero,
+          excessFeeRefundAddress: l1Signer.address,
+          callValueRefundAddress: l1Signer.address,
+        },
         l1BaseFee,
-        l1Signer.address,
-        l1Signer.address,
         l1Provider
       );
 
@@ -211,18 +215,21 @@ task(
         newTokenID,
         l1Signer.address,
         {
-          _maxSubmissionCost: gasEstimateResults.maxSubmissionFee,
+          _maxSubmissionCost: gasEstimateResults.maxSubmissionCost,
           _maxGas: gasEstimateResults.gasLimit,
           _gasPriceBid: gasEstimateResults.maxFeePerGas,
         },
-        l1Signer.address
+        l1Signer.address,
+        {
+          value: gasEstimateResults.deposit,
+        }
       );
 
       const receipt = new L1TransactionReceipt(await res.wait());
       console.log("L1 deposit tx published", receipt.transactionHash);
 
-      const retryableTicket = await receipt.getL1ToL2Message(l2Provider);
-      console.log("waiting for retryable ticket creation:");
+      const retryableTicket = (await receipt.getL1ToL2Messages(l2Provider))[0]
+      console.log("waiting for retryable ticket creation on L2");
 
       const status = await retryableTicket.waitForStatus();
       console.log("done!", status);
