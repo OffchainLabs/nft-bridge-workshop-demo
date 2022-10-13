@@ -43,7 +43,8 @@ contract L2ArbERC721 is ERC721 {
         _mint(to, tokenId);
     }
 
-    function bridgeBurn(uint256 tokenId) external onlyGateway {
+    function bridgeBurn(address owner, uint256 tokenId) external onlyGateway {
+        require(ownerOf(tokenId) == owner, "NOT_OWNER"); 
         _burn(tokenId);
     }
 }

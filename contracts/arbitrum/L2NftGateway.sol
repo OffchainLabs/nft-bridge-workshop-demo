@@ -59,7 +59,7 @@ contract L2NftGateway is IERC721Receiver {
             L2ArbERC721(l2Token).l1Address() == l1Token,
             "INVALID_TOKEN"
         );
-        L2ArbERC721(l2Token).bridgeBurn(tokenId);
+        L2ArbERC721(l2Token).bridgeBurn(msg.sender, tokenId);
 
         bytes memory _l1MessageCallData = abi.encodeWithSelector(
             L1NftGateway.finalizeWithdraw.selector,
