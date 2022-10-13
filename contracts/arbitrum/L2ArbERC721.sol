@@ -43,7 +43,7 @@ contract L2ArbERC721 is ERC721 {
         // Do!
     }
 
-    function bridgeBurn(uint256 tokenId) external {
+    function bridgeBurn(address owner, uint256 tokenId) external {
         // Do!
     }
 }

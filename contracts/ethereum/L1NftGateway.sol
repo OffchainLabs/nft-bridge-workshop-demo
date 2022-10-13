@@ -49,7 +49,6 @@ contract L1NftGateway is IERC721Receiver {
 
     modifier onlyCounterpartL2Gateway() {
         // a message coming from the counterpart gateway was executed by the bridge
-        // NOTE: do we really need this?
         require(msg.sender == bridge, "NOT_FROM_BRIDGE");
 
         // and the outbox reports that the L2 address of the sender is the counterpart gateway
