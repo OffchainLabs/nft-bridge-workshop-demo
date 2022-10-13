@@ -68,7 +68,7 @@ contract L2NftGateway is IERC721Receiver {
             to
         );
 
-        return ArbSys(address(100)).sendTxToL1(to, _l1MessageCallData);
+        return ArbSys(address(100)).sendTxToL1(counterpartL1Gateway, _l1MessageCallData);
     }
 
     function finalizeDeposit(
