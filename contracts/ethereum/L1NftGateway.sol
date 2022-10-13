@@ -48,17 +48,7 @@ contract L1NftGateway is IERC721Receiver {
     }
 
     modifier onlyCounterpartL2Gateway() {
-        // a message coming from the counterpart gateway was executed by the bridge
-        require(msg.sender == bridge, "NOT_FROM_BRIDGE");
-
-        // and the outbox reports that the L2 address of the sender is the counterpart gateway
-        IOutbox outbox = IOutbox(IBridge(bridge).activeOutbox());
-        address l2ToL1Sender = outbox.l2ToL1Sender();
-
-        require(
-            l2ToL1Sender == counterpartL2Gateway,
-            "ONLY_COUNTERPART_GATEWAY"
-        );
+        // Do!
         _;
     }
 
